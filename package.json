@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "description": "Hardened on-chain Oracle supporting ERC-20 and ERC-4626 assets for use in decentralized financial applications.",
   "scripts": {
-    "compile": "npx hardhat compile",
-    "build": "hardhat compile",
+    "build": "npx hardhat compile",
     "test": "npx hardhat test",
     "coverage": "hardhat coverage",
     "lint": "prettier --check .",
