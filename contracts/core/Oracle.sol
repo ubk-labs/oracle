@@ -54,6 +54,12 @@ contract Oracle is IOracle, Ownable {
     /// @notice Manual mode flags.
     mapping(address => bool) public isManual;
 
+    /// @notice Cache for last valid price lookup.
+    mapping(address => LastValidPrice) public lastValidPrice;
+
+    /// @notice Mapping to track vault rate bounds.
+    mapping(address => VaultRateBounds) public vaultRateBounds;
+
     /// @notice Maximum staleness period for Chainlink feeds (seconds).
     uint256 public stalePeriod = Constants.ORACLE_DEFAULT_STALE_PERIOD;
 
@@ -63,39 +69,10 @@ contract Oracle is IOracle, Ownable {
 
     OracleMode public mode = OracleMode.NORMAL;
 
-    /// @notice Cached last valid price and timestamp.
-    struct LastValidPrice {
-        uint256 price;
-        uint256 timestamp;
-    }
-
-    /// @notice Custom vault rate bounds (min/max multiplier per vault).
-    struct VaultRateBounds {
-        uint256 minRate;
-        uint256 maxRate;
-    }
-
-    mapping(address => LastValidPrice) public lastValidPrice;
-    mapping(address => VaultRateBounds) public vaultRateBounds;
-
     /// @notice Recursion tracking for nested ERC4626 vaults.
     uint256 private _recursionDepth;
 
     // -----------------------------------------------------------------------
-    // Events
-    // -----------------------------------------------------------------------
-
-    event LastValidPriceUpdated(
-        address indexed token,
-        uint256 price,
-        uint256 timestamp
-    );
-    event OracleFallbackUsed(
-        address indexed token,
-        uint256 lastValid,
-        uint256 at,
-        string reason
-    );
     // Constructor & Modifiers
     // -----------------------------------------------------------------------
 
@@ -467,5 +444,3 @@ contract Oracle is IOracle, Ownable {
         return price;
     }
 }
-
-
