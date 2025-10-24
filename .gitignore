@@ -1,15 +1,38 @@
-# Remix compiler artifacts
-**/artifacts/
-**/artifacts/**
+# Node modules
+node_modules/
 
-# Remix plugin state folders
-deps/
-states/
+# Hardhat cache and artifacts
+cache/
+artifacts/
+typechain/
+typechain-types/
 
-# Debug info
-*.dbg.json
-*.tsbuildinfo
+# Deployment data
+deployments/
 
-# Optional
+# Environment variables
 .env
-.env.local
+
+# ABI exports (optional if generated)
+abi/
+
+# VSCode settings
+.vscode/
+
+# MacOS system files
+.DS_Store
+
+# Logs
+*.log
+
+# Coverage reports
+coverage/
+
+# Compiled binaries (if using Foundry later)
+out/
+
+# bin files
+bin/
+
+#Ignore tmp  builds of The Graph
+scripts/graph/tmp/
