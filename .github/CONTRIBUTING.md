@@ -26,7 +26,7 @@ All contributors are expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md
 ### Installation
 
 ```bash
-git clone https://github.com/ubk-finance/oracle.git
+git clone https://github.com/ubk-labs/oracle.git
 cd oracle
 npm install
 forge install
