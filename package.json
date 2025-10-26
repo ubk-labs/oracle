@@ -1,7 +1,7 @@
 {
   "name": "@ubk-labs/oracle",
   "version": "0.1.1",
-  "description": "Hardened on-chain Oracle supporting ERC-20 and ERC-4626 assets for use in decentralized financial applications.",
+  "description": "Oracle supporting ERC-20 and ERC-4626 assets for use in decentralized financial applications.",
   "scripts": {
     "build": "npx hardhat compile",
     "test": "npx hardhat test",
