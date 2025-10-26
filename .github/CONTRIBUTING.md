@@ -107,7 +107,7 @@ By submitting a contribution, you agree that your work will be licensed under th
 
 Open a GitHub Discussion under **Q&A** or join our Telegram community for ongoing development updates.
 
-* **[Repository](https://github.com/ubk-finance/oracle)** 
+* **[Repository](https://github.com/ubk-labs/oracle)** 
 * **[Telegram](https://t.me/+bUrjYBxbrec2OWFh)** 
 
 Thank you for helping make DeFi more robust and transparent!
