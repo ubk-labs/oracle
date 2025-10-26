@@ -22,9 +22,6 @@
     "README.md",
     "LICENSE"
   ],
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
-  },
   "devDependencies": {
     "@graphprotocol/hardhat-graph": "^0.1.0-alpha.2",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
