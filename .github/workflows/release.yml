@@ -3,14 +3,14 @@ name: Publish Oracle Package
 on:
   push:
     tags:
-      - "v*"   # triggers when you push a version tag like v0.1.0
+      - "v*" # triggers when you push a version tag like v0.1.0
 
 permissions:
   contents: read
-  packages: write   # allows publishing to GitHub Packages
+  packages: write # allows publishing to GitHub Packages
 
 jobs:
-  # Step 1 — Reuse your existing CI workflow (build + tests)
+  # Step 1 — Run your CI tests first
   test:
     uses: ./.github/workflows/ci.yml
 
@@ -18,7 +18,7 @@ jobs:
   publish:
     needs: test
     runs-on: ubuntu-latest
-    name: Publish to GitHub Packages
+    name: Publish to npm and GitHub Packages
 
     steps:
       - name: Checkout repository
@@ -28,17 +28,27 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: "https://npm.pkg.github.com/"
+          # 👇 Ensures both registries are valid for scoped packages
+          registry-url: https://registry.npmjs.org/
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Publish to Github packages
-        run: npm publish
+      # --- GITHUB PACKAGES ---
+      - name: Publish to GitHub Packages
+        run: npm publish --registry=https://npm.pkg.github.com/
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # --- NPMJS.ORG ---
+      - name: Configure npmrc for npmjs.org
+        run: |
+          echo "registry=https://registry.npmjs.org/" > ~/.npmrc
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
+
       - name: Publish to npmjs.org
-        run: npm publish --access public --registry=https://registry.npmjs.org/
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_TOKEN }}
