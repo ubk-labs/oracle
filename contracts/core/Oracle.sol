@@ -10,8 +10,6 @@ import "../../interfaces/IOracle.sol";
 import "../errors/Errors.sol";
 import "../constants/Constants.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Oracle
  * @notice This contract is an implementation of the IOracle interface.
@@ -274,10 +272,8 @@ contract Oracle is IOracle, Ownable {
      * @return price Cached price in 1e18 precision.
      */
     function getPrice(address token) external view returns (uint256 price) {
-        console.log("Oracle::getPrice called with", token);
         if (token == address(0)) revert ZeroAddress("Oracle:getPrice", "token");
         LastValidPrice memory lv = lastValidPrice[token];
-        console.log("Oracle::getPrice LastValidPrice with", lv.price);
         if (lv.price == 0) revert NoFallbackPrice(token);
         if (!this.isPriceFresh(token))
             revert StalePrice(token, lv.timestamp, block.timestamp);

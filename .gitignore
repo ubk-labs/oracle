@@ -5,10 +5,10 @@ node_modules/
 cache/
 typechain/
 typechain-types/
-artifacts/@chainlink
-artifacts/@openzeppelin
-artifacts/build-info
-artifacts/hardhat
+artifacts/@chainlink/
+artifacts/@openzeppelin/
+artifacts/build-info/
+artifacts/hardhat/
 
 # Deployment data
 deployments/
