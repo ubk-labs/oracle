@@ -168,6 +168,47 @@ describe("Oracle", function () {
         .withArgs(usdc.target, false);
       expect(await oracle.isManual(usdc.target)).to.be.false;
     });
+
+    describe("disableManualPrice()", function () {
+      beforeEach(async () => {
+        // Ensure manual mode is active before disabling
+        await oracle.setManualPrice(usdc.target, ethers.parseUnits("1.00", 18));
+        expect(await oracle.isManual(usdc.target)).to.be.true;
+      });
+
+      it("should allow owner to disable manual mode", async () => {
+        await expect(oracle.disableManualPrice(usdc.target))
+          .to.emit(oracle, "ManualModeEnabled")
+          .withArgs(usdc.target, false);
+
+        expect(await oracle.isManual(usdc.target)).to.be.false;
+      });
+
+      it("should disable manual mode and emit event", async () => {
+        await oracle.setManualPrice(usdc.target, ethers.parseUnits("0.93", 18));
+        await expect(oracle.disableManualPrice(usdc.target))
+          .to.emit(oracle, "ManualModeEnabled")
+          .withArgs(usdc.target, false);
+        expect(await oracle.isManual(usdc.target)).to.be.false;
+      });
+
+      it("should still maintain the manual price mapping after disablement", async () => {
+        await oracle.disableManualPrice(usdc.target);
+        const price = await oracle.manualPrices(usdc.target);
+        expect(price).to.equal(ethers.parseUnits("1.00", 18));
+      });
+
+      it("should revert if token is zero address", async () => {
+        await expect(oracle.disableManualPrice(ethers.ZeroAddress))
+          .to.be.revertedWithCustomError(oracle, "ZeroAddress");
+      });
+
+      it("should not allow non-owner to disable manual mode", async () => {
+        await expect(oracle.connect(user).disableManualPrice(usdc.target))
+          .to.be.revertedWithCustomError(oracle, "OwnableUnauthorizedAccount");
+      });
+    });
+
   });
 
   describe("setStalePeriod()", function () {
