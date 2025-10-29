@@ -29,6 +29,16 @@ describe("Oracle", function () {
     feed = await MockAggregator.deploy(1e8, 8); // $1.00
   });
 
+  // --- Constructor ---
+  describe("Constructor", function () {
+    it("should revert if owner is zero address (via Ownable)", async () => {
+      const Oracle = await ethers.getContractFactory("Oracle");
+      await expect(Oracle.deploy(ethers.ZeroAddress))
+        .to.be.revertedWithCustomError(Oracle, "OwnableInvalidOwner");
+    });
+  });
+
+
   // --- setChainlinkFeed ---
   describe("setChainlinkFeed", function () {
     it("should allow owner to set feed", async () => {
