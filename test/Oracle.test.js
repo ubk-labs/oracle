@@ -38,7 +38,6 @@ describe("Oracle", function () {
     });
   });
 
-
   // --- setChainlinkFeed ---
   describe("setChainlinkFeed", function () {
     it("should allow owner to set feed", async () => {
@@ -255,4 +254,38 @@ describe("Oracle", function () {
         .to.be.revertedWithCustomError(oracle, "InvalidStalePeriod");
     });
   });
+
+  describe("setOracleMode()", function () {
+    it("should allow owner to change mode from NORMAL to PAUSED", async () => {
+      const PAUSED = 1; // enum OracleMode.PAUSED
+      const NORMAL = 0;
+  
+      await expect(oracle.setOracleMode(PAUSED))
+        .to.emit(oracle, "OracleModeChanged")
+        .withArgs(NORMAL, PAUSED);
+  
+      expect(await oracle.mode()).to.equal(PAUSED);
+    });
+  
+    it("should allow switching back from PAUSED to NORMAL", async () => {
+      const PAUSED = 1;
+      const NORMAL = 0;
+  
+      await oracle.setOracleMode(PAUSED);
+  
+      await expect(oracle.setOracleMode(NORMAL))
+        .to.emit(oracle, "OracleModeChanged")
+        .withArgs(PAUSED, NORMAL);
+  
+      expect(await oracle.mode()).to.equal(NORMAL);
+    });
+  
+    it("should revert if called by non-owner", async () => {
+      const PAUSED = 1;
+      await expect(oracle.connect(user).setOracleMode(PAUSED))
+        .to.be.revertedWithCustomError(oracle, "OwnableUnauthorizedAccount")
+        .withArgs(user.address);
+    });
+  });
+  
 });
