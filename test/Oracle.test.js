@@ -259,32 +259,121 @@ describe("Oracle", function () {
     it("should allow owner to change mode from NORMAL to PAUSED", async () => {
       const PAUSED = 1; // enum OracleMode.PAUSED
       const NORMAL = 0;
-  
+
       await expect(oracle.setOracleMode(PAUSED))
         .to.emit(oracle, "OracleModeChanged")
         .withArgs(NORMAL, PAUSED);
-  
+
       expect(await oracle.mode()).to.equal(PAUSED);
     });
-  
+
     it("should allow switching back from PAUSED to NORMAL", async () => {
       const PAUSED = 1;
       const NORMAL = 0;
-  
+
       await oracle.setOracleMode(PAUSED);
-  
+
       await expect(oracle.setOracleMode(NORMAL))
         .to.emit(oracle, "OracleModeChanged")
         .withArgs(PAUSED, NORMAL);
-  
+
       expect(await oracle.mode()).to.equal(NORMAL);
     });
-  
+
     it("should revert if called by non-owner", async () => {
       const PAUSED = 1;
       await expect(oracle.connect(user).setOracleMode(PAUSED))
         .to.be.revertedWithCustomError(oracle, "OwnableUnauthorizedAccount")
         .withArgs(user.address);
+    });
+  });
+
+  describe("setFallbackStalePeriod()", function () {
+    it("should allow owner to set fallback stale period ≥ stalePeriod", async () => {
+      const stale = 3600; // 1 hour
+      const fallback = 5400; // 1.5 hours
+
+      await oracle.setStalePeriod(stale);
+      await expect(oracle.setFallbackStalePeriod(fallback))
+        .to.emit(oracle, "FallbackStalePeriodUpdated")
+        .withArgs(fallback);
+
+      expect(await oracle.fallbackStalePeriod()).to.equal(fallback);
+    });
+
+    it("should revert if fallback period < stalePeriod", async () => {
+      await oracle.setStalePeriod(7200); // 2 hours
+      await expect(oracle.setFallbackStalePeriod(3600))
+        .to.be.revertedWithCustomError(oracle, "InvalidStalePeriod");
+    });
+
+    it("should revert if called by non-owner", async () => {
+      await expect(
+        oracle.connect(user).setFallbackStalePeriod(4000)
+      ).to.be.revertedWithCustomError(oracle, "OwnableUnauthorizedAccount");
+    });
+  });
+
+  describe("setVaultRateBounds()", function () {
+    const min = ethers.parseUnits("0.5", 18);
+    const max = ethers.parseUnits("2", 18);
+    const defaultMin = ethers.parseUnits("0.2", 18); // from Constants.DEFAULT_MIN_VAULT_RATE
+    const defaultMax = ethers.parseUnits("3", 18);   // from Constants.DEFAULT_MAX_VAULT_RATE
+  
+    it("should allow owner to set min and max bounds for a vault", async () => {
+      await expect(oracle.setVaultRateBounds(sdai.target, min, max))
+        .to.emit(oracle, "VaultRateBoundsSet")
+        .withArgs(sdai.target, min, max);
+  
+      const bounds = await oracle.vaultRateBounds(sdai.target);
+      expect(bounds.minRate).to.equal(min);
+      expect(bounds.maxRate).to.equal(max);
+    });
+  
+    it("should revert if vault is zero address", async () => {
+      await expect(
+        oracle.setVaultRateBounds(ethers.ZeroAddress, min, max)
+      ).to.be.revertedWithCustomError(oracle, "ZeroAddress");
+    });
+  
+    it("should revert if min is zero", async () => {
+      await expect(
+        oracle.setVaultRateBounds(sdai.target, 0, max)
+      ).to.be.revertedWithCustomError(oracle, "InvalidVaultBounds");
+    });
+  
+    it("should revert if max ≤ min", async () => {
+      await expect(
+        oracle.setVaultRateBounds(sdai.target, max, min)
+      ).to.be.revertedWithCustomError(oracle, "InvalidVaultBounds");
+    });
+  
+    it("should revert if max > 100e18", async () => {
+      const hugeMax = ethers.parseUnits("101", 18); // exceeds hardcoded limit
+      await expect(
+        oracle.setVaultRateBounds(sdai.target, min, hugeMax)
+      ).to.be.revertedWithCustomError(oracle, "InvalidVaultBounds");
+    });
+  
+    it("should revert if called by non-owner", async () => {
+      await expect(
+        oracle.connect(user).setVaultRateBounds(sdai.target, min, max)
+      ).to.be.revertedWithCustomError(oracle, "OwnableUnauthorizedAccount");
+    });
+  
+    it("should use default min/max bounds in _getVaultPrice() if none are set", async () => {
+      // Only set ERC4626 mapping and feed for underlying
+      await oracle.setERC4626Vault(sdai.target, dai.target);
+      await oracle.setChainlinkFeed(dai.target, feed.target);
+  
+      // Now fetch and verify that the defaults are accepted (rate = 1.02)
+      const tx = await oracle.fetchAndUpdatePrice(sdai.target);
+      const receipt = await tx.wait();     
+      
+      const price = await oracle.getPrice(sdai.target);
+      expect(price).to.equal(ethers.parseUnits("1.02", 18));
+  
+      // Internally this passes: defaultMin = 0.2e18, defaultMax = 3e18
     });
   });
   
