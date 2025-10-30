@@ -38,7 +38,6 @@ describe("Oracle", function () {
     });
   });
 
-
   describe("Admin", function () {
     // --- setChainlinkFeed ---
     describe("setChainlinkFeed", function () {
@@ -382,6 +381,5 @@ describe("Oracle", function () {
   })
 
   describe("External API", function () {
-
   })
 });
