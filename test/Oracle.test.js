@@ -381,5 +381,109 @@ describe("Oracle", function () {
   })
 
   describe("External API", function () {
-  })
-});
+    describe("fetchAndUpdatePrice()", function () {
+      it("should return the manual price if manual mode is enabled", async () => {
+        const manualPrice = ethers.parseUnits("1.23", 18);
+        await oracle.setManualPrice(usdc.target, manualPrice);
+
+        const tx = await oracle.fetchAndUpdatePrice(usdc.target);
+        await tx.wait();
+
+        const price = await oracle.getPrice(usdc.target);
+        expect(price).to.equal(manualPrice);
+      });
+
+      it("should return the vault-derived price if ERC4626 is configured", async () => {
+        await oracle.setERC4626Vault(sdai.target, dai.target);
+        await oracle.setChainlinkFeed(dai.target, feed.target); // DAI = $1
+
+        const expected = ethers.parseUnits("1.02", 18); // from mocked vault exchange rate
+
+        const tx = await oracle.fetchAndUpdatePrice(sdai.target);
+        await tx.wait();
+
+        const price = await oracle.getPrice(sdai.target);
+        expect(price).to.equal(expected);
+      });
+
+      it("should return the Chainlink price and not revert if lastValidPrice exists", async () => {
+        await oracle.setChainlinkFeed(usdc.target, feed.target); // returns 1e8 with 8 decimals
+        const expected = ethers.parseUnits("1", 18);
+
+        let tx = await oracle.fetchAndUpdatePrice(usdc.target);
+        await tx.wait();
+
+        price = await oracle.getPrice(usdc.target);
+        expect(price).to.equal(expected);
+      });
+
+      it("should emit LastValidPriceUpdated", async () => {
+        await oracle.setChainlinkFeed(usdc.target, feed.target);
+
+        await expect(oracle.fetchAndUpdatePrice(usdc.target))
+          .to.emit(oracle, "LastValidPriceUpdated")
+          .withArgs(usdc.target, ethers.parseUnits("1", 18), anyValue);
+      });
+
+      it("should fallback to lastValidPrice if Chainlink data is stale", async () => {
+        // Step 1: Get initial valid price
+        await oracle.setChainlinkFeed(usdc.target, feed.target);
+        await oracle.fetchAndUpdatePrice(usdc.target);
+        const price1 = await oracle.getPrice(usdc.target);
+
+        // Step 2: Get current blockchain timestamp
+        const latestBlock = await ethers.provider.getBlock('latest');
+        const currentTimestamp = latestBlock.timestamp;
+
+        // Step 3: Deploy feed with stale updatedAt (beyond stalePeriod but within fallbackStalePeriod)
+        const MockAggregator = await ethers.getContractFactory("MockAggregatorV3");
+        const staleFeed = await MockAggregator.deploy(1e8, 8);
+
+        // Set updatedAt to 2 hours ago (beyond default stalePeriod of 3600s)
+        await staleFeed.setUpdatedAt(currentTimestamp - 7200 - 1);
+        await oracle.setChainlinkFeed(usdc.target, staleFeed.target);
+
+        // Step 4: Fetch should fallback gracefully and emit correct event (within fallbackStalePeriod)
+        expect(await oracle.fetchAndUpdatePrice(usdc.target))
+          .to.emit(oracle, "OracleFallbackUsed")
+          .withArgs(usdc.target, price1, anyValue, "Chainlink failure");
+
+        // Step 5: Should return original valid price
+        const price2 = await oracle.getPrice(usdc.target);
+        expect(price2).to.equal(price1);
+      });
+
+      it("should fallback to lastValidPrice if Chainlink returns invalid answer (not stale)", async () => {
+        // Step 1: Set initial valid price
+        await oracle.setChainlinkFeed(usdc.target, feed.target);
+        await oracle.fetchAndUpdatePrice(usdc.target);
+        const price1 = await oracle.getPrice(usdc.target);
+
+        // Step 2: Simulate oracle attack - invalid answer but fresh timestamp
+        await feed.updateAnswer(0); // Invalid price (0 or negative)
+
+        // Step 3: Fetch should fallback gracefully and emit the correct event (feed is fresh but invalid)
+        expect(await oracle.fetchAndUpdatePrice(usdc.target))
+          .to.emit(oracle, "OracleFallbackUsed")
+          .withArgs(usdc.target, price1, anyValue, "Chainlink failure");
+
+        // Step 4: Should return original valid price (fallback)
+        const price2 = await oracle.getPrice(usdc.target);
+        expect(price2).to.equal(price1);
+
+      });
+
+      it("should revert if token is zero address", async () => {
+        await expect(oracle.fetchAndUpdatePrice(ethers.ZeroAddress))
+          .to.be.revertedWithCustomError(oracle, "ZeroAddress");
+      });
+
+      it("should revert if oracle is paused", async () => {
+        await oracle.setOracleMode(1); // PAUSED enum value
+        await expect(oracle.fetchAndUpdatePrice(usdc.target))
+          .to.be.revertedWithCustomError(oracle, "OraclePaused");
+      });
+    });
+  });
+})
+
