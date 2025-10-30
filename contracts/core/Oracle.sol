@@ -118,12 +118,12 @@ contract Oracle is IOracle, Ownable {
     /**
      * @notice Sets the maximum time (in seconds) a Chainlink feed value is valid.
      * @param period The new staleness threshold.
-     * @dev Must lie within [Constants.MIN_STALE_PERIOD, Constants.MAX_STALE_PERIOD].
+     * @dev Must lie within [Constants.ORACLE_MIN_STALE_PERIOD, Constants.ORACLE_MAX_STALE_PERIOD].
      */
     function setStalePeriod(uint256 period) external onlyOwner {
         if (
-            period < Constants.MIN_STALE_PERIOD ||
-            period > Constants.MAX_STALE_PERIOD
+            period < Constants.ORACLE_MIN_STALE_PERIOD ||
+            period > Constants.ORACLE_MAX_STALE_PERIOD
         ) revert InvalidStalePeriod(period);
         stalePeriod = period;
         emit StalePeriodUpdated(period);
@@ -175,16 +175,18 @@ contract Oracle is IOracle, Ownable {
         if (token == address(0))
             revert ZeroAddress("Oracle:setManualPrice", "token");
         if (
-            price < Constants.MIN_ABSOLUTE_PRICE ||
-            price > Constants.MAX_ABSOLUTE_PRICE
+            price < Constants.ORACLE_MIN_ABSOLUTE_PRICE_WAD ||
+            price > Constants.ORACLE_MAX_ABSOLUTE_PRICE_WAD
         ) revert InvalidManualPrice(token, price);
 
         LastValidPrice memory lv = lastValidPrice[token];
         if (lv.price > 0 && block.timestamp - lv.timestamp <= stalePeriod) {
             uint256 lowerBound = (lv.price *
-                (1e18 - Constants.MANUAL_PRICE_MAX_DELTA_WAD)) / 1e18;
+                (Constants.WAD - Constants.ORACLE_MANUAL_PRICE_MAX_DELTA_WAD)) /
+                Constants.WAD;
             uint256 upperBound = (lv.price *
-                (1e18 + Constants.MANUAL_PRICE_MAX_DELTA_WAD)) / 1e18;
+                (Constants.WAD + Constants.ORACLE_MANUAL_PRICE_MAX_DELTA_WAD)) /
+                Constants.WAD;
             if (price < lowerBound || price > upperBound)
                 revert InvalidManualPrice(token, price);
         }
@@ -349,10 +351,10 @@ contract Oracle is IOracle, Ownable {
 
         VaultRateBounds memory bounds = vaultRateBounds[vault];
         uint256 minRate = bounds.minRate == 0
-            ? Constants.DEFAULT_MIN_VAULT_RATE
+            ? Constants.ORACLE_MIN_VAULT_RATE_WAD
             : bounds.minRate;
         uint256 maxRate = bounds.maxRate == 0
-            ? Constants.DEFAULT_MAX_VAULT_RATE
+            ? Constants.ORACLE_MAX_VAULT_RATE_WAD
             : bounds.maxRate;
         if (rate > maxRate || rate < minRate)
             revert SuspiciousVaultRate(vault, rate);
@@ -400,8 +402,8 @@ contract Oracle is IOracle, Ownable {
                         ? raw * (10 ** (18 - feedDecimals))
                         : raw / (10 ** (feedDecimals - 18));
                 if (
-                    clPrice < Constants.MIN_ABSOLUTE_PRICE ||
-                    clPrice > Constants.MAX_ABSOLUTE_PRICE
+                    clPrice < Constants.ORACLE_MIN_ABSOLUTE_PRICE_WAD ||
+                    clPrice > Constants.ORACLE_MAX_ABSOLUTE_PRICE_WAD
                 ) valid = false;
             }
         } catch {
@@ -435,8 +437,8 @@ contract Oracle is IOracle, Ownable {
     ) internal returns (uint256 price) {
         price = resolvePrice(token);
         if (
-            price < Constants.MIN_ABSOLUTE_PRICE ||
-            price > Constants.MAX_ABSOLUTE_PRICE
+            price < Constants.ORACLE_MIN_ABSOLUTE_PRICE_WAD ||
+            price > Constants.ORACLE_MAX_ABSOLUTE_PRICE_WAD
         ) revert InvalidOraclePrice(token, address(0));
 
         lastValidPrice[token] = LastValidPrice(price, block.timestamp);

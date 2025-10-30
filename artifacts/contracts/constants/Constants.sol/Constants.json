@@ -5,72 +5,7 @@
   "abi": [
     {
       "inputs": [],
-      "name": "DEFAULT_MAX_VAULT_RATE",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "DEFAULT_MIN_VAULT_RATE",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "MANUAL_PRICE_MAX_DELTA_WAD",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "MAX_ABSOLUTE_PRICE",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "MAX_RECURSION_DEPTH",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "MIN_ABSOLUTE_PRICE",
       "outputs": [
         {
           "internalType": "uint256",
@@ -96,6 +31,97 @@
     },
     {
       "inputs": [],
+      "name": "ORACLE_MANUAL_PRICE_MAX_DELTA_WAD",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ORACLE_MAX_ABSOLUTE_PRICE_WAD",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ORACLE_MAX_STALE_PERIOD",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ORACLE_MAX_VAULT_RATE_WAD",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ORACLE_MIN_ABSOLUTE_PRICE_WAD",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ORACLE_MIN_STALE_PERIOD",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ORACLE_MIN_VAULT_RATE_WAD",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "WAD",
       "outputs": [
         {
@@ -108,8 +134,8 @@
       "type": "function"
     }
   ],
-  "bytecode": "0x61014c61003a600b82828239805160001a60731461002d57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600436106100925760003560e01c806371aeb7a71161006557806371aeb7a7146100df578063b554e888146100f3578063d160ed4d14610102578063f537b1ba1461010a57600080fd5b80631bbfc7e814610097578063316ed52d146100b85780634e9331ef146100c75780636a146024146100d0575b600080fd5b6100a66729a2241af62c000081565b60405190815260200160405180910390f35b6100a66702c68af0bb14000081565b6100a6610e1081565b6100a6670de0b6b3a764000081565b6100a66c0c9f2c9cd04674edea4000000081565b6100a667016345785d8a000081565b6100a6600181565b6100a66402540be4008156fea2646970667358221220dc5a400d186a68ea34de65cde226f09d7a70321e882ff03d8d97704a7798522064736f6c63430008150033",
-  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600436106100925760003560e01c806371aeb7a71161006557806371aeb7a7146100df578063b554e888146100f3578063d160ed4d14610102578063f537b1ba1461010a57600080fd5b80631bbfc7e814610097578063316ed52d146100b85780634e9331ef146100c75780636a146024146100d0575b600080fd5b6100a66729a2241af62c000081565b60405190815260200160405180910390f35b6100a66702c68af0bb14000081565b6100a6610e1081565b6100a6670de0b6b3a764000081565b6100a66c0c9f2c9cd04674edea4000000081565b6100a667016345785d8a000081565b6100a6600181565b6100a66402540be4008156fea2646970667358221220dc5a400d186a68ea34de65cde226f09d7a70321e882ff03d8d97704a7798522064736f6c63430008150033",
+  "bytecode": "0x61016861003a600b82828239805160001a60731461002d57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600436106100a85760003560e01c8063730513511161007057806373051351146101015780639a1b2c43146100ad578063afb9888514610112578063d160ed4d14610121578063f3f7de781461012957600080fd5b80634e9331ef146100ad5780635c94d0f9146100c85780636a146024146100d75780636bae86bb146100e65780636c0d5b36146100f2575b600080fd5b6100b6610e1081565b60405190815260200160405180910390f35b6100b667016345785d8a000081565b6100b6670de0b6b3a764000081565b6100b66402540be40081565b6100b66729a2241af62c000081565b6100b669d3c21bcecceda100000081565b6100b66702c68af0bb14000081565b6100b6600581565b6100b6612a308156fea2646970667358221220d6f647b3c28297edebdcc6db110e61679c0f7edfa1fac62ab3ee1dd2d29c106c64736f6c63430008150033",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600436106100a85760003560e01c8063730513511161007057806373051351146101015780639a1b2c43146100ad578063afb9888514610112578063d160ed4d14610121578063f3f7de781461012957600080fd5b80634e9331ef146100ad5780635c94d0f9146100c85780636a146024146100d75780636bae86bb146100e65780636c0d5b36146100f2575b600080fd5b6100b6610e1081565b60405190815260200160405180910390f35b6100b667016345785d8a000081565b6100b6670de0b6b3a764000081565b6100b66402540be40081565b6100b66729a2241af62c000081565b6100b669d3c21bcecceda100000081565b6100b66702c68af0bb14000081565b6100b6600581565b6100b6612a308156fea2646970667358221220d6f647b3c28297edebdcc6db110e61679c0f7edfa1fac62ab3ee1dd2d29c106c64736f6c63430008150033",
   "linkReferences": {},
   "deployedLinkReferences": {}
 }
