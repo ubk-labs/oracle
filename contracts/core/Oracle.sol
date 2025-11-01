@@ -72,6 +72,12 @@ contract Oracle is IOracle, Ownable {
     /// @notice Recursion tracking for nested ERC4626 vaults.
     uint256 private _recursionDepth;
 
+    /// @notice Array to track supported tokens.
+    address[] public supportedTokens;
+
+    /// @notice Mapping to track supported tokens.
+    mapping(address => bool) public isSupported;
+
     // -----------------------------------------------------------------------
     // Constructor & Modifiers
     // -----------------------------------------------------------------------
@@ -240,6 +246,7 @@ contract Oracle is IOracle, Ownable {
 
         chainlinkFeeds[token] = feed;
         isManual[token] = false;
+        _addSupportedToken(token);
         emit ChainlinkFeedSet(token, feed);
     }
 
@@ -260,6 +267,7 @@ contract Oracle is IOracle, Ownable {
             revert("Invalid ERC4626 vault");
         }
         erc4626Underlying[vault] = underlying;
+        _addSupportedToken(vault);
         emit ERC4626Registered(vault, underlying);
     }
 
@@ -317,6 +325,20 @@ contract Oracle is IOracle, Ownable {
         LastValidPrice memory lv = lastValidPrice[token];
         return (lv.timestamp != 0 &&
             block.timestamp - lv.timestamp <= stalePeriod);
+    }
+
+    /**
+     * @notice Returns the list of all supported token addresses.
+     * @dev The returned array is stored in contract state and may grow over time
+     *      as new tokens are registered via admin configuration functions.
+     * @return tokens An array of all currently supported token addresses.
+     */
+    function getSupportedTokens()
+        external
+        view
+        returns (address[] memory tokens)
+    {
+        return supportedTokens;
     }
 
     // -----------------------------------------------------------------------
@@ -444,5 +466,23 @@ contract Oracle is IOracle, Ownable {
         lastValidPrice[token] = LastValidPrice(price, block.timestamp);
         emit LastValidPriceUpdated(token, price, block.timestamp);
         return price;
+    }
+
+    /**
+     * @notice Adds a token to the supported tokens list if not already present.
+     * @dev
+     *  - Internal helper to register newly configured assets.
+     *  - Ensures uniqueness via `isSupported` mapping.
+     *  - Called from setup functions such as `setChainlinkFeed` or `setERC4626Vault`.
+     * @param token The address of the token to add.
+     *
+     * Emits a {TokenSupportAdded} event upon successful addition.
+     */
+    function _addSupportedToken(address token) internal {
+        if (!isSupported[token]) {
+            supportedTokens.push(token);
+            isSupported[token] = true;
+            emit TokenSupportAdded(token);
+        }
     }
 }

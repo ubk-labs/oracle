@@ -20,9 +20,10 @@ interface IOracle {
         uint256 maxRate;
     }
 
-    /// @notice Oracle specific events for subgraph indexing. 
+    /// @notice Oracle specific events for subgraph indexing.
     event ChainlinkFeedSet(address indexed token, address indexed feed);
     event ERC4626Registered(address indexed vault, address indexed underlying);
+    event TokenSupportAdded(address indexed token);
     event ManualPriceSet(address indexed token, uint256 price);
     event ManualModeEnabled(address indexed token, bool enabled);
     event StalePeriodUpdated(uint256 newPeriod);

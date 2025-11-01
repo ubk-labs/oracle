@@ -49,34 +49,40 @@ describe("Oracle", function () {
         expect(await oracle.chainlinkFeeds(usdc.target)).to.equal(feed.target);
       });
 
-      it("should update lastValidPrice when fetchAndUpdatePrice is called", async () => {
-        await oracle.setChainlinkFeed(usdc.target, feed.target);
-
-        // Call fetchAndUpdatePrice()
-        const tx = await oracle.fetchAndUpdatePrice(usdc.target);
-        const receipt = await tx.wait();
-
-        // --- verify return value ---
-        const price = await oracle.getPrice(usdc.target);
-        expect(price).to.equal(ethers.parseUnits("1", 18));
-
-        // --- verify lastValidPrice updated ---
-        const last = await oracle.lastValidPrice(usdc.target);
-        expect(last.price).to.equal(price);
-        expect(last.timestamp).to.be.gt(0);
-
-        // --- verify event emitted ---
-        await expect(oracle.fetchAndUpdatePrice(usdc.target))
-          .to.emit(oracle, "LastValidPriceUpdated")
-          .withArgs(usdc.target, ethers.parseUnits("1", 18), anyValue);
-      });
-
       it("should reset manual mode when feed is set", async () => {
         await oracle.setManualPrice(usdc.target, ethers.parseUnits("2", 18));
         expect(await oracle.isManual(usdc.target)).to.be.true;
 
         await oracle.setChainlinkFeed(usdc.target, feed.target);
         expect(await oracle.isManual(usdc.target)).to.be.false;
+      });
+
+      it("should emit TokenSupportAdded and register token in supportedTokens", async () => {
+        const tx = await oracle.setChainlinkFeed(usdc.target, feed.target);
+
+        await expect(tx)
+          .to.emit(oracle, "TokenSupportAdded")
+          .withArgs(usdc.target);
+
+        // mapping should reflect support
+        expect(await oracle.isSupported(usdc.target)).to.be.true;
+
+        // array should include token
+        const tokens = await oracle.getSupportedTokens();
+        expect(tokens).to.include(usdc.target);
+      });
+
+      it("should not emit TokenSupportAdded again for the same token", async () => {
+        await oracle.setChainlinkFeed(usdc.target, feed.target); // first registration
+        const tx = await oracle.setChainlinkFeed(usdc.target, feed.target);  // second registration
+
+        // no new TokenSupportAdded event
+        await expect(tx).to.not.emit(oracle, "TokenSupportAdded");
+
+        // array length should remain 1
+        const tokens = await oracle.getSupportedTokens();
+        expect(tokens.length).to.equal(1);
+        expect(tokens[0]).to.equal(usdc.target);
       });
 
       it("should revert if token is zero", async () => {
@@ -103,6 +109,32 @@ describe("Oracle", function () {
           .withArgs(sdai.target, dai.target);
 
         expect(await oracle.erc4626Underlying(sdai.target)).to.equal(dai.target);
+      });
+
+      it("should emit TokenSupportAdded and update mappings", async () => {
+        const tx = await oracle.setERC4626Vault(sdai.target, dai.target);
+
+        await expect(tx)
+          .to.emit(oracle, "TokenSupportAdded")
+          .withArgs(sdai.target);
+
+        // mapping should reflect token support
+        expect(await oracle.isSupported(sdai.target)).to.be.true;
+
+        // array should include the new token
+        const tokens = await oracle.getSupportedTokens();
+        expect(tokens).to.include(sdai.target);
+      });
+
+      it("should not emit TokenSupportAdded twice for same vault", async () => {
+        await oracle.setERC4626Vault(sdai.target, dai.target);
+        const tx = await oracle.setERC4626Vault(sdai.target, dai.target);
+
+        await expect(tx).to.not.emit(oracle, "TokenSupportAdded");
+
+        const tokens = await oracle.getSupportedTokens();
+        expect(tokens.length).to.equal(1);
+        expect(tokens[0]).to.equal(sdai.target);
       });
 
       it("should revert if vault is zero", async () => {
@@ -404,6 +436,28 @@ describe("Oracle", function () {
 
         const price = await oracle.getPrice(sdai.target);
         expect(price).to.equal(expected);
+      });
+
+      it("should update lastValidPrice when fetchAndUpdatePrice is called", async () => {
+        await oracle.setChainlinkFeed(usdc.target, feed.target);
+
+        // Call fetchAndUpdatePrice()
+        const tx = await oracle.fetchAndUpdatePrice(usdc.target);
+        const receipt = await tx.wait();
+
+        // --- verify return value ---
+        const price = await oracle.getPrice(usdc.target);
+        expect(price).to.equal(ethers.parseUnits("1", 18));
+
+        // --- verify lastValidPrice updated ---
+        const last = await oracle.lastValidPrice(usdc.target);
+        expect(last.price).to.equal(price);
+        expect(last.timestamp).to.be.gt(0);
+
+        // --- verify event emitted ---
+        await expect(oracle.fetchAndUpdatePrice(usdc.target))
+          .to.emit(oracle, "LastValidPriceUpdated")
+          .withArgs(usdc.target, ethers.parseUnits("1", 18), anyValue);
       });
 
       it("should return the Chainlink price and not revert if lastValidPrice exists", async () => {
