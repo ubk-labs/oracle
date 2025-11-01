@@ -386,6 +386,58 @@ contract Oracle is IOracle, Ownable {
     }
 
     /**
+     * @notice Fetches and validates the latest Chainlink feed price.
+     * @param feed The address of the Chainlink AggregatorV3 feed.
+     * @return price The normalized price (1e18 precision).
+     * @return valid Boolean indicating whether the feed result is valid.
+     *
+     * @dev
+     *  - Fetches `latestRoundData()` from the feed.
+     *  - Checks for nonzero `answer` and `updatedAt` values.
+     *  - Rejects stale prices older than `stalePeriod`.
+     *  - Normalizes feed decimals to 18.
+     *  - Ensures price lies within absolute oracle bounds.
+     *
+     *  If any condition fails or the feed call reverts, returns `(0, false)`.
+     */
+    function _getChainlinkPrice(
+        address feed
+    ) internal view returns (uint256 price, bool valid) {
+        try AggregatorV3Interface(feed).latestRoundData() returns (
+            uint80,
+            int256 answer,
+            uint256,
+            uint256 updatedAt,
+            uint80
+        ) {
+            if (
+                answer <= 0 ||
+                updatedAt == 0 ||
+                block.timestamp - updatedAt > stalePeriod
+            ) return (0, false);
+
+            uint8 feedDecimals = AggregatorV3Interface(feed).decimals();
+            uint256 raw = uint256(answer);
+
+            // normalize to 1e18
+            uint256 clPrice = feedDecimals == 18
+                ? raw
+                : feedDecimals < 18
+                    ? raw * (10 ** (18 - feedDecimals))
+                    : raw / (10 ** (feedDecimals - 18));
+
+            if (
+                clPrice < Constants.ORACLE_MIN_ABSOLUTE_PRICE_WAD ||
+                clPrice > Constants.ORACLE_MAX_ABSOLUTE_PRICE_WAD
+            ) return (0, false);
+
+            return (clPrice, true);
+        } catch {
+            return (0, false);
+        }
+    }
+
+    /**
      * @notice Resolves a token's price using manual, ERC4626, or Chainlink sources.
      * @param token Token to resolve.
      * @return price Resolved fair price in 1e18 precision.
@@ -400,38 +452,7 @@ contract Oracle is IOracle, Ownable {
         address feed = chainlinkFeeds[token];
         if (feed == address(0)) revert NoPriceFeed(token);
 
-        uint256 clPrice;
-        bool valid = true;
-
-        try AggregatorV3Interface(feed).latestRoundData() returns (
-            uint80,
-            int256 answer,
-            uint256,
-            uint256 updatedAt,
-            uint80
-        ) {
-            if (
-                answer <= 0 ||
-                updatedAt == 0 ||
-                block.timestamp - updatedAt > stalePeriod
-            ) valid = false;
-            else {
-                uint8 feedDecimals = AggregatorV3Interface(feed).decimals();
-                uint256 raw = uint256(answer);
-                clPrice = feedDecimals == 18
-                    ? raw
-                    : feedDecimals < 18
-                        ? raw * (10 ** (18 - feedDecimals))
-                        : raw / (10 ** (feedDecimals - 18));
-                if (
-                    clPrice < Constants.ORACLE_MIN_ABSOLUTE_PRICE_WAD ||
-                    clPrice > Constants.ORACLE_MAX_ABSOLUTE_PRICE_WAD
-                ) valid = false;
-            }
-        } catch {
-            valid = false;
-        }
-
+        (uint256 clPrice, bool valid) = _getChainlinkPrice(feed);
         if (valid) return clPrice;
 
         LastValidPrice memory lv = lastValidPrice[token];
