@@ -147,6 +147,22 @@ describe("Oracle", function () {
           .to.be.revertedWithCustomError(oracle, "ZeroAddress");
       });
 
+      it("should revert if vault is not a valid ERC4626 contract", async () => {
+        // deploy a contract that does NOT implement asset()
+        const InvalidVault = await ethers.getContractFactory("MockERC20");
+        const badVault = await InvalidVault.deploy(
+          "FakeVault",
+          "FV",
+          18,
+          ethers.parseUnits("1000000", 18)
+        );
+    
+        // calling setERC4626Vault should revert
+        await expect(
+          oracle.setERC4626Vault(badVault.target, dai.target)
+        ).to.be.revertedWithCustomError(oracle, "InvalidERC4626Vault");
+      });
+
       it("should not allow non-owner to call", async () => {
         await expect(oracle.connect(user).setERC4626Vault(sdai.target, dai.target))
           .to.be.revertedWithCustomError(oracle, "OwnableUnauthorizedAccount");

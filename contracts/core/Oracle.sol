@@ -266,7 +266,7 @@ contract Oracle is IOracle, Ownable {
         if (vault == address(0) || underlying == address(0))
             revert ZeroAddress("Oracle:setERC4626Vault", "input");
         try IERC4626(vault).asset() returns (address) {} catch {
-            revert("Invalid ERC4626 vault");
+            revert InvalidERC4626Vault(vault);
         }
         erc4626Underlying[vault] = underlying;
         _addSupportedToken(vault);
