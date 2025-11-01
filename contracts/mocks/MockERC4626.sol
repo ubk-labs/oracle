@@ -5,7 +5,7 @@ import "./MockERC20.sol";
 import "./MockIERC4626.sol";
 
 contract Mock4626 is MockERC20, MockIERC4626 {
-    uint256 public exchangeRate = 1e18;
+    uint256 public exchangeRate = 1e18; // 1:1 default
     address private _asset; // underlying ERC20 asset
     uint8 private immutable _assetDecimals;
 
