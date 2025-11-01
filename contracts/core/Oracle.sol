@@ -2,9 +2,11 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import "../../interfaces/IOracle.sol";
 import "../errors/Errors.sol";
@@ -419,12 +421,16 @@ contract Oracle is IOracle, Ownable {
             uint8 feedDecimals = AggregatorV3Interface(feed).decimals();
             uint256 raw = uint256(answer);
 
-            // normalize to 1e18
-            uint256 clPrice = feedDecimals == 18
-                ? raw
-                : feedDecimals < 18
-                    ? raw * (10 ** (18 - feedDecimals))
-                    : raw / (10 ** (feedDecimals - 18));
+            uint256 clPrice;
+            if (feedDecimals == 18) {
+                clPrice = raw;
+            } else if (feedDecimals < 18) {
+                // multiply and scale up safely to 18 decimals
+                clPrice = Math.mulDiv(raw, 10 ** (18 - feedDecimals), 1);
+            } else {
+                // scale down safely to 18 decimals
+                clPrice = Math.mulDiv(raw, 1, 10 ** (feedDecimals - 18));
+            }
 
             if (
                 clPrice < Constants.ORACLE_MIN_ABSOLUTE_PRICE_WAD ||
