@@ -565,121 +565,113 @@ describe("Oracle", function () {
           .to.be.revertedWithCustomError(oracle, "OraclePaused");
       });
     });
-  });
 
-  describe("toUSD() and fromUSD()", function () {
-    beforeEach(async () => {
-      await setup();
-    });
-
-    it("correctly converts 6-decimal USDC to USD", async () => {
-      const feedUSDC = await MockAggregator.deploy(1e8, 8); // $1
-      await oracle.setChainlinkFeed(usdc.target, feedUSDC.target);
-      await oracle.fetchAndUpdatePrice(usdc.target);
-
-      const amount = ethers.parseUnits("123.456789", 6);
-      const usd = await oracle.toUSD(usdc.target, amount);
-
-      expect(usd).to.equal(ethers.parseUnits("123.456789", 18));
-    });
-
-    it("correctly converts 8-decimal WBTC to USD", async () => {
-      const feedWBTC = await MockAggregator.deploy(25000e8, 8); // $25k
-      await oracle.setChainlinkFeed(wbtc.target, feedWBTC.target);
-      await oracle.fetchAndUpdatePrice(wbtc.target);
-
-      const amount = ethers.parseUnits("1", 8);
-      const usd = await oracle.toUSD(wbtc.target, amount);
-
-      expect(usd).to.equal(ethers.parseUnits("25000", 18));
-    });
-
-    it("correctly handles mixed decimals (sDAI + USDC + WBTC)", async () => {
-      // sdai is the Mock4626 from setup()
-      // usdc, wbtc from setup()
-
-      const feedUSDC = await MockAggregator.deploy(1e8, 8);
-      const feedWBTC = await MockAggregator.deploy(25000e8, 8);
-
-      await oracle.setChainlinkFeed(usdc.target, feedUSDC.target);
-      await oracle.setChainlinkFeed(dai.target, feedUSDC.target);
-      await oracle.setChainlinkFeed(wbtc.target, feedWBTC.target);
-
-      await oracle.setERC4626Vault(sdai.target, dai.target);
-
-      await oracle.fetchAndUpdatePrice(sdai.target);
-      await oracle.fetchAndUpdatePrice(dai.target);
-      await oracle.fetchAndUpdatePrice(usdc.target);
-      await oracle.fetchAndUpdatePrice(wbtc.target);
-
-      const usd1 = await oracle.toUSD(sdai.target, ethers.parseUnits("1000", 18));
-      const usd2 = await oracle.toUSD(usdc.target, ethers.parseUnits("1000", 6));
-      const usd3 = await oracle.toUSD(wbtc.target, ethers.parseUnits("1", 8));
-
-      expect(usd1 + usd2 + usd3).to.equal(ethers.parseUnits("27020", 18));
-    });
-
-    it("returns 0 when amount = 0 in toUSD()", async () => {
-      expect(await oracle.toUSD(usdc.target, 0)).to.equal(0n);
-    });
-
-    it("returns 0 when usdAmount = 0 in fromUSD()", async () => {
-      expect(await oracle.fromUSD(usdc.target, 0)).to.equal(0n);
-    });
-
-    describe("Normalization invariants", function () {
-
-      it("round-trips 6-decimal USDC", async () => {
-        const feedUSDC = await MockAggregator.deploy(1e8, 8);
+    describe("toUSD() + fromUSD()", function () {
+      beforeEach(async () => {
+        await setup();
+      });
+  
+      it("correctly converts 6-decimal USDC to USD", async () => {
         await oracle.setChainlinkFeed(usdc.target, feedUSDC.target);
         await oracle.fetchAndUpdatePrice(usdc.target);
-
+  
         const amount = ethers.parseUnits("123.456789", 6);
         const usd = await oracle.toUSD(usdc.target, amount);
-        const back = await oracle.fromUSD(usdc.target, usd);
-
-        expect(back).to.be.closeTo(amount, 1n);
+  
+        expect(usd).to.equal(ethers.parseUnits("123.456789", 18));
       });
-
-      it("round-trips 8-decimal WBTC", async () => {
-        const feedWBTC = await MockAggregator.deploy(25000e8, 8);
+  
+      it("correctly converts 8-decimal WBTC to USD", async () => {
         await oracle.setChainlinkFeed(wbtc.target, feedWBTC.target);
         await oracle.fetchAndUpdatePrice(wbtc.target);
-
-        const amount = ethers.parseUnits("0.5", 8);
+  
+        const amount = ethers.parseUnits("1", 8);
         const usd = await oracle.toUSD(wbtc.target, amount);
-        const back = await oracle.fromUSD(wbtc.target, usd);
-
-        expect(back).to.be.closeTo(amount, 1n);
+  
+        expect(usd).to.equal(ethers.parseUnits("25000", 18));
       });
-
-      it("round-trips 18-decimal ERC4626 vault token (sDAI)", async () => {
-        const feedDAI = await MockAggregator.deploy(ethers.parseUnits("1", 18), 18);
-
-        await oracle.setChainlinkFeed(dai.target, feedDAI.target);
-        await oracle.setERC4626Vault(sdai.target, dai.target);
-
-        await oracle.fetchAndUpdatePrice(dai.target);
+  
+      it("correctly handles mixed decimals (sDAI + USDC + WBTC)", async () => {
+        await oracle.setChainlinkFeed(usdc.target, feedUSDC.target); // 6d
+        await oracle.setChainlinkFeed(dai.target, feedUSDC.target); // 6d
+        await oracle.setChainlinkFeed(wbtc.target, feedWBTC.target); // 8d
+  
+        await oracle.setERC4626Vault(sdai.target, dai.target); // 18d
+  
         await oracle.fetchAndUpdatePrice(sdai.target);
-
-        const amount = ethers.parseUnits("321.123456789012345678", 18);
-        const usd = await oracle.toUSD(sdai.target, amount);
-        const back = await oracle.fromUSD(sdai.target, usd);
-
-        expect(back).to.be.closeTo(amount, 1n);
+        await oracle.fetchAndUpdatePrice(dai.target);
+        await oracle.fetchAndUpdatePrice(usdc.target);
+        await oracle.fetchAndUpdatePrice(wbtc.target);
+  
+        const usd1 = await oracle.toUSD(sdai.target, ethers.parseUnits("1000", 18));
+        const usd2 = await oracle.toUSD(usdc.target, ethers.parseUnits("1000", 6));
+        const usd3 = await oracle.toUSD(wbtc.target, ethers.parseUnits("1", 8));
+  
+        expect(usd1 + usd2 + usd3).to.equal(ethers.parseUnits("27020", 18));
       });
-
-      it("uses underlying USDC price for ERC4626 vaults", async () => {
-        await oracle.setChainlinkFeed(dai.target, feedDAI.target);
-        await oracle.setERC4626Vault(sdai.target, dai.target);
-
-        await oracle.fetchAndUpdatePrice(dai.target);
-        await oracle.fetchAndUpdatePrice(sdai.target);
-
-        const amount = ethers.parseUnits("1000", 18);
-        const usd = await oracle.toUSD(sdai.target, amount);
-
-        expect(usd).to.equal(ethers.parseUnits("1020", 18));
+  
+      it("returns 0 when amount = 0 in toUSD()", async () => {
+        expect(await oracle.toUSD(usdc.target, 0)).to.equal(0n);
+      });
+  
+      it("returns 0 when usdAmount = 0 in fromUSD()", async () => {
+        expect(await oracle.fromUSD(usdc.target, 0)).to.equal(0n);
+      });
+  
+      describe("Normalization invariants", function () {
+  
+        it("round-trips 6-decimal USDC", async () => {
+          const feedUSDC = await MockAggregator.deploy(1e8, 8);
+          await oracle.setChainlinkFeed(usdc.target, feedUSDC.target);
+          await oracle.fetchAndUpdatePrice(usdc.target);
+  
+          const amount = ethers.parseUnits("123.456789", 6);
+          const usd = await oracle.toUSD(usdc.target, amount);
+          const back = await oracle.fromUSD(usdc.target, usd);
+  
+          expect(back).to.be.closeTo(amount, 1n);
+        });
+  
+        it("round-trips 8-decimal WBTC", async () => {
+          const feedWBTC = await MockAggregator.deploy(25000e8, 8);
+          await oracle.setChainlinkFeed(wbtc.target, feedWBTC.target);
+          await oracle.fetchAndUpdatePrice(wbtc.target);
+  
+          const amount = ethers.parseUnits("0.5", 8);
+          const usd = await oracle.toUSD(wbtc.target, amount);
+          const back = await oracle.fromUSD(wbtc.target, usd);
+  
+          expect(back).to.be.closeTo(amount, 1n);
+        });
+  
+        it("round-trips 18-decimal ERC4626 vault token (sDAI)", async () => {
+          const feedDAI = await MockAggregator.deploy(ethers.parseUnits("1", 18), 18);
+  
+          await oracle.setChainlinkFeed(dai.target, feedDAI.target);
+          await oracle.setERC4626Vault(sdai.target, dai.target);
+  
+          await oracle.fetchAndUpdatePrice(dai.target);
+          await oracle.fetchAndUpdatePrice(sdai.target);
+  
+          const amount = ethers.parseUnits("321.123456789012345678", 18);
+          const usd = await oracle.toUSD(sdai.target, amount);
+          const back = await oracle.fromUSD(sdai.target, usd);
+  
+          expect(back).to.be.closeTo(amount, 1n);
+        });
+  
+        it("uses underlying asset price for ERC4626 vaults", async () => {
+          await oracle.setChainlinkFeed(dai.target, feedDAI.target); // set Chainlink feed for DAI
+          await oracle.setERC4626Vault(sdai.target, dai.target); // set ERC4626 mapping feed for sDAI to DAI
+  
+          await oracle.fetchAndUpdatePrice(dai.target); // init price cache
+          await oracle.fetchAndUpdatePrice(sdai.target); // init price cache
+  
+          const amount = ethers.parseUnits("1000", 18);
+          const usd = await oracle.toUSD(sdai.target, amount); // call getPrice() under the hood to fetch cached value & convert.
+  
+          expect(usd).to.equal(ethers.parseUnits("1020", 18)); // 2% yield
+        });
       });
     });
   });
