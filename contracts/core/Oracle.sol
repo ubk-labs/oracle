@@ -278,18 +278,10 @@ contract Oracle is IOracle, Ownable {
     // -----------------------------------------------------------------------
 
     /**
-     * @notice Returns the cached price for a token (1e18 precision).
-     * @dev Reverts if no valid price or if staleness > stalePeriod.
-     * @param token Asset token address.
-     * @return price Cached price in 1e18 precision.
+     *  Public wrapper for internal _getPrice() method.
      */
     function getPrice(address token) external view returns (uint256 price) {
-        if (token == address(0)) revert ZeroAddress("Oracle:getPrice", "token");
-        LastValidPrice memory lv = lastValidPrice[token];
-        if (lv.price == 0) revert NoFallbackPrice(token);
-        if (!this.isPriceFresh(token))
-            revert StalePrice(token, lv.timestamp, block.timestamp);
-        return lv.price;
+        return _getPrice(token);
     }
 
     /**
@@ -347,6 +339,20 @@ contract Oracle is IOracle, Ownable {
     // Internal Helpers
     // -----------------------------------------------------------------------
 
+    /**
+     * @notice Returns the cached price for a token (1e18 precision).
+     * @dev Reverts if no valid price or if staleness > stalePeriod.
+     * @param token Asset token address.
+     * @return price Cached price in 1e18 precision.
+     */
+    function _getPrice(address token) internal view returns (uint256) {
+        if (token == address(0)) revert ZeroAddress("Oracle:getPrice", "token");
+        LastValidPrice memory lv = lastValidPrice[token];
+        if (lv.price == 0) revert NoFallbackPrice(token);
+        if (!this.isPriceFresh(token))
+            revert StalePrice(token, lv.timestamp, block.timestamp);
+        return lv.price;
+    }
     /**
      * @notice Resolves the fair price of an ERC4626 vault share.
      * @param vault ERC4626 vault token address.
@@ -511,5 +517,43 @@ contract Oracle is IOracle, Ownable {
             isSupported[token] = true;
             emit TokenSupportAdded(token);
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // Decimal Helpers
+    // -----------------------------------------------------------------------
+
+    /**
+     * @notice Converts a token amount into USD (18 decimals)
+     * @param token Token address
+     * @param amount Raw token amount (native decimals)
+     * @return usdValue USD value (18 decimals)
+     */
+    function toUSD(
+        address token,
+        uint256 amount
+    ) external view returns (uint256 usdValue) {
+        if (amount == 0) return 0;
+        uint8 decimals = IERC20Metadata(token).decimals();
+        uint256 normalized = (amount * Constants.WAD) / (10 ** decimals);
+        uint256 price = _getPrice(token); // 18 decimals
+        usdValue = (normalized * price) / Constants.WAD;
+    }
+
+    /**
+     * @notice Converts a USD amount (18 decimals) into token units
+     * @param token Token address
+     * @param usdAmount USD value (18 decimals)
+     * @return tokenAmount Equivalent in token units
+     */
+    function fromUSD(
+        address token,
+        uint256 usdAmount
+    ) external view returns (uint256 tokenAmount) {
+        if (usdAmount == 0) return 0;
+        uint8 decimals = IERC20Metadata(token).decimals();
+        uint256 price = _getPrice(token); // 18 decimals
+        uint256 normalized = (usdAmount * Constants.WAD) / price;
+        tokenAmount = (normalized * (10 ** decimals)) / Constants.WAD;
     }
 }
