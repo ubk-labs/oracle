@@ -66,4 +66,9 @@ contract Mock4626 is MockERC20, MockIERC4626 {
 
         return (normalized * 1e18) / exchangeRate;
     }
+
+    /// @notice get exchange rates 
+    function getExchangeRate() external view returns (uint256) {
+        return exchangeRate;
+    }
 }
