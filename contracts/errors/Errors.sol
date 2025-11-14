@@ -1,5 +1,9 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@ubk-labs/ubk-commons/commons/UBKErrors.sol";
+
 // ───────────── Errors ─────────────
-error ZeroAddress(string functionName, string field);
 error InvalidManualPrice(address token, uint256 price);
 error InvalidStalePeriod(uint256 period);
 error InvalidVaultBounds(address vault, uint256 minRate, uint256 maxRate);
