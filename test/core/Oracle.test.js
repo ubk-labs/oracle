@@ -13,7 +13,7 @@ describe("Oracle", function () {
     // Mock ERC20 tokens
     usdc = await MockERC20.deploy("USD Coin", "USDC", 6, ethers.parseUnits("1000000", 6));
     dai = await MockERC20.deploy("DAI Stablecoin", "DAI", 18, ethers.parseUnits("1000000", 18));
-    wbtc = await MockERC20.deploy("WBTC", "WBTC", 8, ethers.parseUnits("1000000", 18));
+    wbtc = await MockERC20.deploy("WBTC", "WBTC", 8, ethers.parseUnits("1000000", 8));
 
     feedUSDC = await MockAggregator.deploy(1e8, 8); // $1.00
     feedDAI = await MockAggregator.deploy(1e8, 8); // $1.00
