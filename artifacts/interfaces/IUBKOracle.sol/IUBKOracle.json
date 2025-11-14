@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
-  "contractName": "IOracle",
-  "sourceName": "interfaces/IOracle.sol",
+  "contractName": "IUBKOracle",
+  "sourceName": "interfaces/IUBKOracle.sol",
   "abi": [
     {
       "anonymous": false,
@@ -153,13 +153,13 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "enum IOracle.OracleMode",
+          "internalType": "enum IUBKOracle.OracleMode",
           "name": "oldMode",
           "type": "uint8"
         },
         {
           "indexed": false,
-          "internalType": "enum IOracle.OracleMode",
+          "internalType": "enum IUBKOracle.OracleMode",
           "name": "newMode",
           "type": "uint8"
         }

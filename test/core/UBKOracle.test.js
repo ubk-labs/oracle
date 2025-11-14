@@ -3,11 +3,11 @@ const { ethers } = require("hardhat");
 const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 
 
-describe("Oracle", function () {
+describe("UBKOracle", function () {
   let deployer, user, oracle, usdc, dai, sdai, feedUSDC, feedWBTC, feedDAI, wbtc, MockERC20, Mock4626, MockAggregator;
 
   async function setup() {
-    const Oracle = await ethers.getContractFactory("Oracle");
+    const Oracle = await ethers.getContractFactory("UBKOracle");
     oracle = await Oracle.deploy(deployer.address);
 
     // Mock ERC20 tokens
@@ -43,7 +43,7 @@ describe("Oracle", function () {
   // --- Constructor ---
   describe("Constructor", function () {
     it("should revert if owner is zero address (via Ownable)", async () => {
-      const Oracle = await ethers.getContractFactory("Oracle");
+      const Oracle = await ethers.getContractFactory("UBKOracle");
       await expect(Oracle.deploy(ethers.ZeroAddress))
         .to.be.revertedWithCustomError(Oracle, "OwnableInvalidOwner");
     });

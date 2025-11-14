@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-import "../../interfaces/IOracle.sol";
+import "../../interfaces/IUBKOracle.sol";
 import "../errors/Errors.sol";
 import "../constants/Constants.sol";
 
@@ -39,7 +39,7 @@ import "../constants/Constants.sol";
  *  - UI / Subgraphs can use `isPriceFresh()` and `getPriceAge()` for safety checks.
  *
  */
-contract Oracle is IOracle, Ownable {
+contract UBKOracle is IUBKOracle, Ownable {
     // -----------------------------------------------------------------------
     // Storage
     // -----------------------------------------------------------------------

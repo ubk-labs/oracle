@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-interface IOracle {
+interface IUBKOracle {
     /// @notice Operational state of the oracle.
     enum OracleMode {
         NORMAL,
