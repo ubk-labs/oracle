@@ -2,7 +2,7 @@
 # Contribution Guidelines
 
 👋 Welcome, and thanks for your interest in contributing!
-This repository hosts an open source implementation of the **IOracle** interface.
+This repository hosts an open source implementation of the **IUBKOracle** interface.
 The contract is meant to serve as a canonical on-chain pricing layer used in decentralized financial applications.
 We value clean code, reproducible tests, and transparent collaboration.
 
