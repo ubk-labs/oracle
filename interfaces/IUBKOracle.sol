@@ -48,6 +48,14 @@ interface IUBKOracle {
 
     // View Functions
     function getPrice(address token) external view returns (uint256);
+    function toUSD(
+        address token,
+        uint256 amount
+    ) external view returns (uint256 usdValue);
+    function fromUSD(
+        address token,
+        uint256 usdAmount
+    ) external view returns (uint256 tokenAmount);
 
     // Mutators
     function fetchAndUpdatePrice(address token) external returns (uint256);

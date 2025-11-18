@@ -21,9 +21,9 @@ import "../constants/Constants.sol";
  *  combining manual overrides, ERC4626 vault conversions, and Chainlink feeds.
  *
  *  === PRICE RESOLUTION ORDER ===
- *  1️⃣ Manual override (±10% bound from last valid)
- *  2️⃣ ERC4626 vault-derived (convertToAssets * underlying price)
- *  3️⃣ Chainlink feed (normalized to 1e18)
+ *  1️. Manual override (±10% bound from last valid)
+ *  2. ERC4626 vault-derived (convertToAssets * underlying price)
+ *  3️. Chainlink feed (normalized to 1e18)
  *
  *  === SAFETY FEATURES ===
  *  - Recursion guard (nested ERC4626 depth ≤ 5)
