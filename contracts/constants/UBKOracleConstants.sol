@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "@ubk-labs/ubk-commons/commons/UBKConstants.sol";
 
 
-library Constants {
+library UBKOracleConstants {
     // -----------------------------------------------------------------------
     // UBK System Constants
     // -----------------------------------------------------------------------
