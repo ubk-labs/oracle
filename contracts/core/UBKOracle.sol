@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import "../../interfaces/IUBKOracle.sol";
-import "../errors/Errors.sol";
+import "../errors/UBKOracleErrors.sol";
 import "../constants/UBKOracleConstants.sol";
 
 /**
