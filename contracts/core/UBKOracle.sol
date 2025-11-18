@@ -10,7 +10,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import "../../interfaces/IUBKOracle.sol";
 import "../errors/Errors.sol";
-import "../constants/Constants.sol";
+import "../constants/UBKOracleConstants.sol";
 
 /**
  * @title Oracle
@@ -63,11 +63,11 @@ contract UBKOracle is IUBKOracle, Ownable {
     mapping(address => VaultRateBounds) public vaultRateBounds;
 
     /// @notice Maximum staleness period for Chainlink feeds (seconds).
-    uint256 public stalePeriod = Constants.ORACLE_DEFAULT_STALE_PERIOD;
+    uint256 public stalePeriod = UBKOracleConstants.ORACLE_DEFAULT_STALE_PERIOD;
 
     /// @notice Staleness tolerance for fallback prices (seconds).
     uint256 public fallbackStalePeriod =
-        Constants.ORACLE_DEFAULT_STALE_PERIOD * 2;
+        UBKOracleConstants.ORACLE_DEFAULT_STALE_PERIOD * 2;
 
     OracleMode public mode = OracleMode.NORMAL;
 
@@ -90,7 +90,7 @@ contract UBKOracle is IUBKOracle, Ownable {
      */
     constructor(address _owner) Ownable(_owner) {
         if (_owner == address(0))
-            revert ZeroAddress("Oracle:constructor", "owner");
+            revert ZeroAddress("UBKOracle::constructor", "owner");
     }
 
     /// @notice Ensures oracle is not paused.
@@ -102,7 +102,7 @@ contract UBKOracle is IUBKOracle, Ownable {
 
     /// @notice Prevents infinite recursion when resolving nested ERC4626 vaults.
     modifier checkRecursion() {
-        if (_recursionDepth >= Constants.MAX_RECURSION_DEPTH)
+        if (_recursionDepth >= UBKOracleConstants.MAX_RECURSION_DEPTH)
             revert RecursiveResolution(address(0));
         _recursionDepth++;
         _;
@@ -126,12 +126,12 @@ contract UBKOracle is IUBKOracle, Ownable {
     /**
      * @notice Sets the maximum time (in seconds) a Chainlink feed value is valid.
      * @param period The new staleness threshold.
-     * @dev Must lie within [Constants.ORACLE_MIN_STALE_PERIOD, Constants.ORACLE_MAX_STALE_PERIOD].
+     * @dev Must lie within [UBKOracleConstants.ORACLE_MIN_STALE_PERIOD, UBKOracleConstants.ORACLE_MAX_STALE_PERIOD].
      */
     function setStalePeriod(uint256 period) external onlyOwner {
         if (
-            period < Constants.ORACLE_MIN_STALE_PERIOD ||
-            period > Constants.ORACLE_MAX_STALE_PERIOD
+            period < UBKOracleConstants.ORACLE_MIN_STALE_PERIOD ||
+            period > UBKOracleConstants.ORACLE_MAX_STALE_PERIOD
         ) revert InvalidStalePeriod(period);
         stalePeriod = period;
         emit StalePeriodUpdated(period);
@@ -161,7 +161,7 @@ contract UBKOracle is IUBKOracle, Ownable {
         uint256 maxRate
     ) external onlyOwner {
         if (vault == address(0))
-            revert ZeroAddress("Oracle:setVaultRateBounds", "vault");
+            revert ZeroAddress("UBKOracle::setVaultRateBounds", "vault");
         if (minRate == 0 || maxRate <= minRate || maxRate > 100e18)
             revert InvalidVaultBounds(vault, minRate, maxRate);
 
@@ -181,20 +181,20 @@ contract UBKOracle is IUBKOracle, Ownable {
         uint256 price
     ) external onlyOwner whenNotPaused {
         if (token == address(0))
-            revert ZeroAddress("Oracle:setManualPrice", "token");
+            revert ZeroAddress("UBKOracle::setManualPrice", "token");
         if (
-            price < Constants.ORACLE_MIN_ABSOLUTE_PRICE_WAD ||
-            price > Constants.ORACLE_MAX_ABSOLUTE_PRICE_WAD
+            price < UBKOracleConstants.ORACLE_MIN_ABSOLUTE_PRICE_WAD ||
+            price > UBKOracleConstants.ORACLE_MAX_ABSOLUTE_PRICE_WAD
         ) revert InvalidManualPrice(token, price);
 
         LastValidPrice memory lv = lastValidPrice[token];
         if (lv.price > 0 && block.timestamp - lv.timestamp <= stalePeriod) {
             uint256 lowerBound = (lv.price *
-                (Constants.WAD - Constants.ORACLE_MANUAL_PRICE_MAX_DELTA_WAD)) /
-                Constants.WAD;
+                (UBKOracleConstants.WAD - UBKOracleConstants.ORACLE_MANUAL_PRICE_MAX_DELTA_WAD)) /
+                UBKOracleConstants.WAD;
             uint256 upperBound = (lv.price *
-                (Constants.WAD + Constants.ORACLE_MANUAL_PRICE_MAX_DELTA_WAD)) /
-                Constants.WAD;
+                (UBKOracleConstants.WAD + UBKOracleConstants.ORACLE_MANUAL_PRICE_MAX_DELTA_WAD)) /
+                UBKOracleConstants.WAD;
             if (price < lowerBound || price > upperBound)
                 revert InvalidManualPrice(token, price);
         }
@@ -214,7 +214,7 @@ contract UBKOracle is IUBKOracle, Ownable {
      */
     function disableManualPrice(address token) external onlyOwner {
         if (token == address(0))
-            revert ZeroAddress("Oracle:disableManualPrice", "token");
+            revert ZeroAddress("UBKOracle::disableManualPrice", "token");
         isManual[token] = false;
         emit ManualModeEnabled(token, false);
     }
@@ -227,7 +227,7 @@ contract UBKOracle is IUBKOracle, Ownable {
      */
     function setChainlinkFeed(address token, address feed) external onlyOwner {
         if (token == address(0) || feed == address(0))
-            revert ZeroAddress("Oracle:setChainlinkFeed", "input");
+            revert ZeroAddress("UBKOracle::setChainlinkFeed", "input");
         if (feed.code.length == 0) revert InvalidFeedContract(feed);
 
         AggregatorV3Interface agg = AggregatorV3Interface(feed);
@@ -264,7 +264,7 @@ contract UBKOracle is IUBKOracle, Ownable {
         address underlying
     ) external onlyOwner {
         if (vault == address(0) || underlying == address(0))
-            revert ZeroAddress("Oracle:setERC4626Vault", "input");
+            revert ZeroAddress("UBKOracle::setERC4626Vault", "input");
         try IERC4626(vault).asset() returns (address) {} catch {
             revert InvalidERC4626Vault(vault);
         }
@@ -295,7 +295,7 @@ contract UBKOracle is IUBKOracle, Ownable {
         address token
     ) external whenNotPaused returns (uint256) {
         if (token == address(0))
-            revert ZeroAddress("Oracle:fetchAndUpdatePrice", "token");
+            revert ZeroAddress("UBKOracle::fetchAndUpdatePrice", "token");
         return _fetchAndUpdatePrice(token);
     }
 
@@ -352,9 +352,9 @@ contract UBKOracle is IUBKOracle, Ownable {
     ) external view returns (uint256 usdValue) {
         if (amount == 0) return 0;
         uint8 decimals = IERC20Metadata(token).decimals();
-        uint256 normalized = (amount * Constants.WAD) / (10 ** decimals);
+        uint256 normalized = (amount * UBKOracleConstants.WAD) / (10 ** decimals);
         uint256 price = _getPrice(token); // 18 decimals
-        usdValue = (normalized * price) / Constants.WAD;
+        usdValue = (normalized * price) / UBKOracleConstants.WAD;
     }
 
     /**
@@ -370,8 +370,8 @@ contract UBKOracle is IUBKOracle, Ownable {
         if (usdAmount == 0) return 0;
         uint8 decimals = IERC20Metadata(token).decimals();
         uint256 price = _getPrice(token); // 18 decimals
-        uint256 normalized = (usdAmount * Constants.WAD) / price;
-        tokenAmount = (normalized * (10 ** decimals)) / Constants.WAD;
+        uint256 normalized = (usdAmount * UBKOracleConstants.WAD) / price;
+        tokenAmount = (normalized * (10 ** decimals)) / UBKOracleConstants.WAD;
     }
 
     // -----------------------------------------------------------------------
@@ -385,7 +385,7 @@ contract UBKOracle is IUBKOracle, Ownable {
      * @return price Cached price in 1e18 precision.
      */
     function _getPrice(address token) internal view returns (uint256) {
-        if (token == address(0)) revert ZeroAddress("Oracle:getPrice", "token");
+        if (token == address(0)) revert ZeroAddress("UBKOracle::getPrice", "token");
         LastValidPrice memory lv = lastValidPrice[token];
         if (lv.price == 0) revert NoFallbackPrice(token);
         if (!this.isPriceFresh(token))
@@ -412,24 +412,24 @@ contract UBKOracle is IUBKOracle, Ownable {
         if (assetsPerShare == 0 || assetsPerShare > 1e36)
             revert InvalidVaultExchangeRate(vault, assetsPerShare);
 
-        uint256 scaledAssets = (assetsPerShare * Constants.WAD) /
+        uint256 scaledAssets = (assetsPerShare * UBKOracleConstants.WAD) /
             (10 ** underlyingDecimals);
-        uint256 scaledShare = (oneShare * Constants.WAD) /
+        uint256 scaledShare = (oneShare * UBKOracleConstants.WAD) /
             (10 ** shareDecimals);
-        uint256 rate = (scaledAssets * Constants.WAD) / scaledShare;
+        uint256 rate = (scaledAssets * UBKOracleConstants.WAD) / scaledShare;
 
         VaultRateBounds memory bounds = vaultRateBounds[vault];
         uint256 minRate = bounds.minRate == 0
-            ? Constants.ORACLE_MIN_VAULT_RATE_WAD
+            ? UBKOracleConstants.ORACLE_MIN_VAULT_RATE_WAD
             : bounds.minRate;
         uint256 maxRate = bounds.maxRate == 0
-            ? Constants.ORACLE_MAX_VAULT_RATE_WAD
+            ? UBKOracleConstants.ORACLE_MAX_VAULT_RATE_WAD
             : bounds.maxRate;
         if (rate > maxRate || rate < minRate)
             revert SuspiciousVaultRate(vault, rate);
 
         uint256 underlyingPrice = resolvePrice(underlying);
-        return (underlyingPrice * rate) / Constants.WAD;
+        return (underlyingPrice * rate) / UBKOracleConstants.WAD;
     }
 
     /**
@@ -478,8 +478,8 @@ contract UBKOracle is IUBKOracle, Ownable {
             }
 
             if (
-                clPrice < Constants.ORACLE_MIN_ABSOLUTE_PRICE_WAD ||
-                clPrice > Constants.ORACLE_MAX_ABSOLUTE_PRICE_WAD
+                clPrice < UBKOracleConstants.ORACLE_MIN_ABSOLUTE_PRICE_WAD ||
+                clPrice > UBKOracleConstants.ORACLE_MAX_ABSOLUTE_PRICE_WAD
             ) return (0, false);
 
             return (clPrice, true);
@@ -531,8 +531,8 @@ contract UBKOracle is IUBKOracle, Ownable {
     ) internal returns (uint256 price) {
         price = resolvePrice(token);
         if (
-            price < Constants.ORACLE_MIN_ABSOLUTE_PRICE_WAD ||
-            price > Constants.ORACLE_MAX_ABSOLUTE_PRICE_WAD
+            price < UBKOracleConstants.ORACLE_MIN_ABSOLUTE_PRICE_WAD ||
+            price > UBKOracleConstants.ORACLE_MAX_ABSOLUTE_PRICE_WAD
         ) revert InvalidOraclePrice(token, address(0));
 
         lastValidPrice[token] = LastValidPrice(price, block.timestamp);
